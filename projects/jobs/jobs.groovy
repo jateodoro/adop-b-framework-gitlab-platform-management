@@ -13,12 +13,12 @@ def cartridgeManagementFolderName= projectFolderName + "/Cartridge_Management"
 def cartridgeManagementFolder = folder(cartridgeManagementFolderName) { displayName('Cartridge Management') }
 
 // Cartridge List
-def cartridge_list = []
-readFileFromWorkspace("${WORKSPACE}/cartridges.txt").eachLine { line ->
-    cartridge_repo_name = line.tokenize("/").last()
-    local_cartridge_url = cartridgeBaseUrl + "/" + cartridge_repo_name
-    cartridge_list << local_cartridge_url
-}
+//def cartridge_list = []
+//readFileFromWorkspace("${WORKSPACE}/cartridges.txt").eachLine { line ->
+//    cartridge_repo_name = line.tokenize("/").last()
+//    local_cartridge_url = cartridgeBaseUrl + "/" + cartridge_repo_name
+//    cartridge_list << local_cartridge_url
+//}
 
 
 // Jobs
@@ -27,7 +27,7 @@ def loadCartridgeJob = freeStyleJob(cartridgeManagementFolderName + "/Load_Cartr
 // Setup Load_Cartridge
 loadCartridgeJob.with{
     parameters{
-        choiceParam('CARTRIDGE_CLONE_URL', cartridge_list, 'Cartridge URL to load')
+        stringParam('CARTRIDGE_CLONE_URL', '', 'Cartridge URL to load')
     }
     environmentVariables {
         env('WORKSPACE_NAME',workspaceFolderName)

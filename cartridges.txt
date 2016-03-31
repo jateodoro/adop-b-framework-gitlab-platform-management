@@ -1,0 +1,2 @@
+https://github.com/Accenture/adop-cartridge-java.git
+https://innersource.accenture.com/adop-b-framework-aem-core-gen5/adop-b-framework-aem-cartridge.git

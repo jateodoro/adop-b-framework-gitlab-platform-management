@@ -9,9 +9,9 @@ def generateWorkspaceJob = freeStyleJob(WorkspaceManagementFolderName + "/Genera
 generateWorkspaceJob.with {
 		parameters {
 			stringParam('WORKSPACE_NAME', '','')
-			stringParam("ADMIN_USERS","","The list of users' email addresses that should be setup initially as admin. They will have full access to all jobs within the project.")
-			stringParam("DEVELOPER_USERS","","The list of users' email addresses that should be setup initially as developers. They will have full access to all non-admin jobs within the project.")
-			stringParam("VIEWER_USERS","","The list of users' email addresses that should be setup initially as viewers. They will have read-only access to all non-admin jobs within the project.")
+			stringParam("ADMIN_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as admin. They will have full access to all jobs within the project.")
+			stringParam("DEVELOPER_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as developers. They will have full access to all non-admin jobs within the project.")
+			stringParam("VIEWER_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as viewers. They will have read-only access to all non-admin jobs within the project.")
 		}
 		label("ldap")
 		wrappers {

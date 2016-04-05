@@ -15,9 +15,9 @@ def generateProjectJob = freeStyleJob(projectManagementFolderName + "/Generate_P
 generateProjectJob.with{
     parameters{
         stringParam("PROJECT_NAME","","The name of the project to be generated.")
-        stringParam("ADMIN_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as admin. They will have full access to all jobs within the project.")
-        stringParam("DEVELOPER_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as developers. They will have full access to all non-admin jobs within the project.")
-        stringParam("VIEWER_USERS","jenkins@accenture.com","The list of users' email addresses that should be setup initially as viewers. They will have read-only access to all non-admin jobs within the project.")
+        stringParam("ADMIN_USERS","gitlab@accenture.com","The list of users' email addresses that should be setup initially as admin. They will have full access to all jobs within the project.")
+        stringParam("DEVELOPER_USERS","gitlab@accenture.com","The list of users' email addresses that should be setup initially as developers. They will have full access to all non-admin jobs within the project.")
+        stringParam("VIEWER_USERS","gitlab@accenture.com","The list of users' email addresses that should be setup initially as viewers. They will have read-only access to all non-admin jobs within the project.")
     }
     label("ldap")
     environmentVariables {

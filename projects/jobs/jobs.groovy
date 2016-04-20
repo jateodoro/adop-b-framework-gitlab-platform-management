@@ -41,7 +41,8 @@ loadCartridgeJob.with{
     }
     steps {
         shell('''#!/bin/bash -ex
-        
+PASSWORD_GITLAB=${PASSWORD_GITLAB:-gitlab1234}
+
 chmod +x ${WORKSPACE}/common/gitlab/create_project.sh
 
 # We trust everywhere
@@ -58,7 +59,7 @@ repo_namespace="${PROJECT_NAME}"
 permissions_repo="${repo_namespace}/permissions"
 
 # get Gitlab root token
-token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=gitlab1234" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
+token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=${PASSWORD_GITLAB}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
 
 # Create repositories
 mkdir ${WORKSPACE}/tmp

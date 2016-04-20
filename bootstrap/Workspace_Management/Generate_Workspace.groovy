@@ -46,55 +46,57 @@ generateWorkspaceJob.with {
 						exit 1
 					fi
 				''')
-				shell('''# LDAP
-					chmod +x ${WORKSPACE}/common/ldap/*.sh
-					chmod +x ${WORKSPACE}/common/ldap/lib/*.sh
-					chmod +x ${WORKSPACE}/common/gitlab/*.sh
-					chmod +x ${WORKSPACE}/common/gitlab/group/*.sh
+				shell('''
+# LDAP
+PASSWORD_GITLAB=${PASSWORD_GITLAB:-gitlab1234}
+
+chmod +x ${WORKSPACE}/common/ldap/*.sh
+chmod +x ${WORKSPACE}/common/ldap/lib/*.sh
+chmod +x ${WORKSPACE}/common/gitlab/*.sh
+chmod +x ${WORKSPACE}/common/gitlab/group/*.sh
 				
-					${WORKSPACE}/common/ldap/generate_role.sh -r "admin" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${ADMIN_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
-					${WORKSPACE}/common/ldap/generate_role.sh -r "developer" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${DEVELOPER_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
-					${WORKSPACE}/common/ldap/generate_role.sh -r "viewer" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${VIEWER_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
+${WORKSPACE}/common/ldap/generate_role.sh -r "admin" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${ADMIN_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
+${WORKSPACE}/common/ldap/generate_role.sh -r "developer" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${DEVELOPER_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
+${WORKSPACE}/common/ldap/generate_role.sh -r "viewer" -n "${WORKSPACE_NAME}" -d "${DC}" -g "${OU_GROUPS}" -p "${OU_PEOPLE}" -u "${VIEWER_USERS}" -f "${OUTPUT_FILE}" -w "${WORKSPACE}"
 
-					set +e
-					${WORKSPACE}/common/ldap/load_ldif.sh -h ldap -u "${LDAP_ADMIN_USER}" -p "${LDAP_ADMIN_PASSWORD}" -b "${DC}" -f "${OUTPUT_FILE}"
-					set -e
+set +e
+${WORKSPACE}/common/ldap/load_ldif.sh -h ldap -u "${LDAP_ADMIN_USER}" -p "${LDAP_ADMIN_PASSWORD}" -b "${DC}" -f "${OUTPUT_FILE}"
+set -e
 
-					ADMIN_USERS=$(echo ${ADMIN_USERS} | tr ',' ' ')
-					DEVELOPER_USERS=$(echo ${DEVELOPER_USERS} | tr ',' ' ')
-					VIEWER_USERS=$(echo ${VIEWER_USERS} | tr ',' ' ')
+ADMIN_USERS=$(echo ${ADMIN_USERS} | tr ',' ' ')
+DEVELOPER_USERS=$(echo ${DEVELOPER_USERS} | tr ',' ' ')
+VIEWER_USERS=$(echo ${VIEWER_USERS} | tr ',' ' ')
 					
-					# GitLab
-					token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=gitlab1234" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
+# GitLab
+token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=${PASSWORD_GITLAB}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
 					
-					for user in $ADMIN_USERS $DEVELOPER_USERS $VIEWER_USERS
-					do
-							username=$(echo ${user} | cut -d'@' -f1)
-							${WORKSPACE}/common/gitlab/create_user.sh -g http://gitlab:9080/ -t "${token}" -u "${username}" -p "${username}" -e "${user}" 
-					done
+for user in $ADMIN_USERS $DEVELOPER_USERS $VIEWER_USERS
+do
+		username=$(echo ${user} | cut -d'@' -f1)
+		${WORKSPACE}/common/gitlab/create_user.sh -g http://gitlab:9080/ -t "${token}" -u "${username}" -p "${username}" -e "${user}" 
+done
 
-					# create new group			
-					${WORKSPACE}/common/gitlab/create_group.sh -g http://gitlab:9080/ -t "${token}" -w "${WORKSPACE_NAME}"
+# create new group			
+${WORKSPACE}/common/gitlab/create_group.sh -g http://gitlab:9080/ -t "${token}" -w "${WORKSPACE_NAME}"
 										
-					# get the id of the group
-					gid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
+# get the id of the group
+gid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
 					
-					# add the users to the group as owners
-					for owner in $ADMIN_USERS
-					do
-							ownername=$(echo ${owner} | cut -d'@' -f1)
-							uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-							${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 50
-					done
+# add the users to the group as owners
+for owner in $ADMIN_USERS
+do
+		ownername=$(echo ${owner} | cut -d'@' -f1)
+		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 50
+done
 
-					# add the users to the group as guests
-					for guest in $DEVELOPER_USERS $VIEWER_USERS
-					do
-							guestname=$(echo ${guest} | cut -d'@' -f1)
-							uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-							${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 10
-					done
-				''')
+# add the users to the group as guests
+for guest in $DEVELOPER_USERS $VIEWER_USERS
+do
+		guestname=$(echo ${guest} | cut -d'@' -f1)
+		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 10
+done''')
 				dsl {
 					external("workspaces/jobs/**/*.groovy")
 				}

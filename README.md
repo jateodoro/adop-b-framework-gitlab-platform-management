@@ -13,7 +13,7 @@ The platform management repository includes the Jenkins jobs and supporting scri
 - Cartridges
 - Multi-tenancy via workspaces & projects
 
-This repository is loaded into the platform using the baked in "Load\_Platform" job and contains:
+This repository is loaded into the platform using the custom "GitLab\_Load\_Platform" job and contains:
 
 - Jenkins Job DSL - defines the Jenkins jobs for workspaces, projects, and cartridges
 - Jenkins Groovy scripts - for automating the configuration of Jenkins

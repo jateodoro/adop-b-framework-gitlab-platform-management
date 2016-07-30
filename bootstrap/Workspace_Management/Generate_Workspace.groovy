@@ -26,7 +26,12 @@ generateWorkspaceJob.with {
 			}
 			credentialsBinding {
 				usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
-				text("GITLAB_TOKEN","gitlab-secrets-id")
+			}
+		}
+		configure { project ->
+			project / 'buildWrappers' / 'org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper' / 'bindings' / 'org.jenkinsci.plugins.credentialsbinding.impl.StringBinding' {
+			    'credentialsId'('gitlab-secrets-id')
+				'variable'('GITLAB_TOKEN')
 			}
 		}
 		scm {

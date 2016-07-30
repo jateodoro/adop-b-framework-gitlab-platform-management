@@ -97,7 +97,7 @@ for owner in $ADMIN_USERS
 do
 		ownername=$(echo ${owner} | cut -d'@' -f1)
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 50
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -p $pid -u $uid -a 50
 done
 				
 # add the users to the project as developers
@@ -105,7 +105,7 @@ for developer in $DEVELOPER_USERS
 do
 		developername=$(echo ${developer} | cut -d'@' -f1)
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${developername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 30
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -p $pid -u $uid -a 30
 done
 				
 # add the users to the project as guests
@@ -113,7 +113,7 @@ for guest in $VIEWER_USERS
 do
 		guestname=$(echo ${guest} | cut -d'@' -f1)
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 10
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -p $pid -u $uid -a 10
 done''')
         shell('''#!/bin/bash -ex
 				# Gerrit

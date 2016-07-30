@@ -26,7 +26,7 @@ generateWorkspaceJob.with {
 			}
 			credentialsBinding {
 				usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
-				secretText("GITLAB_TOKEN","gitlab-secrets-id")
+				text("GITLAB_TOKEN","gitlab-secrets-id")
 			}
 		}
 		scm {

@@ -39,10 +39,14 @@ loadCartridgeJob.with{
         maskPasswords()
         sshAgent("adop-jenkins-master")
     }
+	configure { project ->
+		project / 'buildWrappers' / 'org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper' / 'bindings' / 'org.jenkinsci.plugins.credentialsbinding.impl.StringBinding' {
+		    'credentialsId'('gitlab-secrets-id')
+			'variable'('GITLAB_TOKEN')
+		}
+	}
     steps {
         shell('''#!/bin/bash -ex
-PASSWORD_GITLAB=${PASSWORD_GITLAB:-gitlab1234}
-
 chmod +x ${WORKSPACE}/common/gitlab/create_project.sh
 
 # We trust everywhere
@@ -58,9 +62,6 @@ git clone ${CARTRIDGE_CLONE_URL} cartridge
 repo_namespace="${PROJECT_NAME}"
 permissions_repo="${repo_namespace}/permissions"
 
-# get Gitlab root token
-token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=${PASSWORD_GITLAB}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
-
 # Create repositories
 mkdir ${WORKSPACE}/tmp
 cd ${WORKSPACE}/tmp
@@ -70,10 +71,10 @@ while read repo_url; do
         target_repo_name="${WORKSPACE_NAME}/${repo_name}"
         
         # get the namespace id of the group
-		gid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
+		gid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
 				
 		# create new project				
-		${WORKSPACE}/common/gitlab/create_project.sh -g http://gitlab:9080/ -t "${token}" -w "${gid}" -p "${repo_name}"	
+		${WORKSPACE}/common/gitlab/create_project.sh -g http://gitlab/gitlab/ -t "${GITLAB_TOKEN}" -w "${gid}" -p "${repo_name}"	
         
         # Populate repository
         git clone git@gitlab:"${target_repo_name}.git"

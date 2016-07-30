@@ -35,10 +35,15 @@ generateProjectJob.with{
         }
         credentialsBinding {
             usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
-			secretText("GITLAB_TOKEN","gitlab-secrets-id")
         }
         sshAgent("adop-jenkins-master")
     }
+	configure { project ->
+		project / 'buildWrappers' / 'org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper' / 'bindings' / 'org.jenkinsci.plugins.credentialsbinding.impl.StringBinding' {
+		    'credentialsId'('gitlab-secrets-id')
+			'variable'('GITLAB_TOKEN')
+		}
+	}
 	scm {
 				git {
 						remote {

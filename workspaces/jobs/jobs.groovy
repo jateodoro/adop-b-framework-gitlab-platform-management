@@ -35,6 +35,7 @@ generateProjectJob.with{
         }
         credentialsBinding {
             usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
+			secretText("GITLAB_TOKEN","gitlab-secrets-id")
         }
         sshAgent("adop-jenkins-master")
     }
@@ -49,17 +50,14 @@ generateProjectJob.with{
 	}
     steps {
         shell('''#!/bin/bash -e
-
-				# Validate Variables
-				pattern=" |'"
-				if [[ "${PROJECT_NAME}" =~ ${pattern} ]]; then
-					echo "PROJECT_NAME contains a space, please replace with an underscore - exiting..."
-					exit 1
-				fi
+# Validate Variables
+pattern=" |'"
+if [[ "${PROJECT_NAME}" =~ ${pattern} ]]; then
+	echo "PROJECT_NAME contains a space, please replace with an underscore - exiting..."
+	exit 1
+fi
 		''')
         shell('''set -e
-PASSWORD_GITLAB=${PASSWORD_GITLAB:-gitlab1234}
-
 chmod +x ${WORKSPACE}/common/ldap/*.sh
 chmod +x ${WORKSPACE}/common/ldap/lib/*.sh
 chmod +x ${WORKSPACE}/common/gitlab/*.sh
@@ -79,40 +77,38 @@ ADMIN_USERS=$(echo ${ADMIN_USERS} | tr ',' ' ')
 DEVELOPER_USERS=$(echo ${DEVELOPER_USERS} | tr ',' ' ')
 VIEWER_USERS=$(echo ${VIEWER_USERS} | tr ',' ' ')
 
-# Gitlab
-token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=${PASSWORD_GITLAB}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
-				
+# Gitlab				
 # get the namespace id of the group
-gid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
+gid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
 				
 # create new project				
-${WORKSPACE}/common/gitlab/create_project.sh -g http://gitlab:9080/ -t "${token}" -w "${gid}" -p "${PROJECT_NAME}"
+${WORKSPACE}/common/gitlab/create_project.sh -g http://gitlab/gitlab/ -t "${GITLAB_TOKEN}" -w "${gid}" -p "${PROJECT_NAME}"
 				
 # get project id
-pid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/projects/${WORKSPACE_NAME}%2F${PROJECT_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
+pid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/projects/${WORKSPACE_NAME}%2F${PROJECT_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
 				
 # add the users to the project as owners
 for owner in $ADMIN_USERS
 do
 		ownername=$(echo ${owner} | cut -d'@' -f1)
-		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab:9080/ -t $token -p $pid -u $uid -a 50
+		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 50
 done
 				
 # add the users to the project as developers
 for developer in $DEVELOPER_USERS
 do
 		developername=$(echo ${developer} | cut -d'@' -f1)
-		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${developername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab:9080/ -t $token -p $pid -u $uid -a 30
+		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${developername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 30
 done
 				
 # add the users to the project as guests
 for guest in $VIEWER_USERS
 do
 		guestname=$(echo ${guest} | cut -d'@' -f1)
-		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab:9080/ -t $token -p $pid -u $uid -a 10
+		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $token -p $pid -u $uid -a 10
 done''')
         shell('''#!/bin/bash -ex
 				# Gerrit

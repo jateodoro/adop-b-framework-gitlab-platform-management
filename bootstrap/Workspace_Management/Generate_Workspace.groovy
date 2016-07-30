@@ -26,6 +26,7 @@ generateWorkspaceJob.with {
 			}
 			credentialsBinding {
 				usernamePassword("LDAP_ADMIN_USER", "LDAP_ADMIN_PASSWORD", "adop-ldap-admin")
+				secretText("GITLAB_TOKEN","gitlab-secrets-id")
 			}
 		}
 		scm {
@@ -48,8 +49,6 @@ generateWorkspaceJob.with {
 				''')
 				shell('''
 # LDAP
-PASSWORD_GITLAB=${PASSWORD_GITLAB:-gitlab1234}
-
 chmod +x ${WORKSPACE}/common/ldap/*.sh
 chmod +x ${WORKSPACE}/common/ldap/lib/*.sh
 chmod +x ${WORKSPACE}/common/gitlab/*.sh
@@ -68,34 +67,32 @@ DEVELOPER_USERS=$(echo ${DEVELOPER_USERS} | tr ',' ' ')
 VIEWER_USERS=$(echo ${VIEWER_USERS} | tr ',' ' ')
 					
 # GitLab
-token="$(curl -X POST "http://gitlab:9080/api/v3/session?login=root&password=${PASSWORD_GITLAB}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['private_token'];")"
-					
 for user in $ADMIN_USERS $DEVELOPER_USERS $VIEWER_USERS
 do
 		username=$(echo ${user} | cut -d'@' -f1)
-		${WORKSPACE}/common/gitlab/create_user.sh -g http://gitlab:9080/ -t "${token}" -u "${username}" -p "${username}" -e "${user}" 
+		${WORKSPACE}/common/gitlab/create_user.sh -g http://gitlab/gitlab/ -t "${GITLAB_TOKEN}" -u "${username}" -p "${username}" -e "${user}" 
 done
 
 # create new group			
-${WORKSPACE}/common/gitlab/create_group.sh -g http://gitlab:9080/ -t "${token}" -w "${WORKSPACE_NAME}"
+${WORKSPACE}/common/gitlab/create_group.sh -g http://gitlab/gitlab/ -t "${GITLAB_TOKEN}" -w "${WORKSPACE_NAME}"
 										
 # get the id of the group
-gid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
+gid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/groups/${WORKSPACE_NAME}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj['id'];")"
 					
 # add the users to the group as owners
 for owner in $ADMIN_USERS
 do
 		ownername=$(echo ${owner} | cut -d'@' -f1)
-		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 50
+		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $token -i $gid -u $uid -a 50
 done
 
 # add the users to the group as guests
 for guest in $DEVELOPER_USERS $VIEWER_USERS
 do
 		guestname=$(echo ${guest} | cut -d'@' -f1)
-		uid="$(curl --header "PRIVATE-TOKEN: $token" "http://gitlab:9080/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab:9080/ -t $token -i $gid -u $uid -a 10
+		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $token -i $gid -u $uid -a 10
 done''')
 				dsl {
 					external("workspaces/jobs/**/*.groovy")

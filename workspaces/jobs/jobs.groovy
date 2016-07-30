@@ -115,12 +115,6 @@ do
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
 		${WORKSPACE}/projects/gitlab/add_user_to_project.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -p $pid -u $uid -a 10
 done''')
-        shell('''#!/bin/bash -ex
-# Gerrit
-if [ $ADOP_GERRIT_ENABLED = "true" ]; then
-source ${WORKSPACE}/projects/gerrit/configure.sh
-fi
-		''')
         dsl {
             external("projects/jobs/**/*.groovy")
         }

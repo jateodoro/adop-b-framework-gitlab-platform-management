@@ -89,7 +89,7 @@ for owner in $ADMIN_USERS
 do
 		ownername=$(echo ${owner} | cut -d'@' -f1)
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${ownername}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $token -i $gid -u $uid -a 50
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -i $gid -u $uid -a 50
 done
 
 # add the users to the group as guests
@@ -97,7 +97,7 @@ for guest in $DEVELOPER_USERS $VIEWER_USERS
 do
 		guestname=$(echo ${guest} | cut -d'@' -f1)
 		uid="$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "http://gitlab/gitlab/api/v3/users?username=${guestname}" | python -c "import json,sys;obj=json.load(sys.stdin);print obj[0]['id'];")"
-		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $token -i $gid -u $uid -a 10
+		${WORKSPACE}/common/gitlab/group/add_user_to_group.sh -g http://gitlab/gitlab/ -t $GITLAB_TOKEN -i $gid -u $uid -a 10
 done''')
 				dsl {
 					external("workspaces/jobs/**/*.groovy")
